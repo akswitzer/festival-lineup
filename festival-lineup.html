@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Festival Lineup Planner</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #0d0d1a;
+            --surface:  #16162a;
+            --surface2: #1e1e35;
+            --border:   #2a2a48;
+            --accent:   #8b5cf6;
+            --accent2:  #a78bfa;
+            --text:     #f0efff;
+            --muted:    #6b6b9a;
+            --red:      #ef4444;
+        }
+
+        html { background: var(--bg); }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100dvh;
+        }
+
+        #app {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100dvh;
+            position: relative;
+        }
+
+        /* ── Views ── */
+        .view { display: none; padding-bottom: 80px; }
+        .view.active { display: block; }
+
+        /* ── Page Header ── */
+        .page-header {
+            padding: 18px 16px 10px;
+            position: sticky; top: 0; z-index: 20;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 21px; font-weight: 800;
+            background: linear-gradient(130deg, #fff 30%, var(--accent2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .page-header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+        /* ── Bottom Nav ── */
+        nav {
+            position: fixed; bottom: 0;
+            left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 500px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .nav-btn {
+            flex: 1; padding: 10px 4px 8px;
+            background: none; border: none; cursor: pointer;
+            color: var(--muted); font-size: 9px; font-weight: 700;
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            letter-spacing: 0.04em; text-transform: uppercase;
+            transition: color 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .nav-btn.active { color: var(--accent2); }
+        .nav-icon { font-size: 19px; line-height: 1; }
+
+        /* ── Section / Card ── */
+        .section { padding: 14px 16px; }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            font-weight: 700; font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        /* ── Forms ── */
+        label {
+            display: block; font-size: 11px; font-weight: 700;
+            color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="time"], select {
+            width: 100%; padding: 11px 13px;
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: 10px; color: var(--text);
+            font-size: 16px;
+            margin-bottom: 10px;
+            appearance: none; -webkit-appearance: none;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        input[type="text"]:focus, input[type="time"]:focus, select:focus {
+            border-color: var(--accent);
+        }
+        input::placeholder { color: var(--muted); }
+        select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b6b9a' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+        .row2 { display: flex; gap: 10px; }
+        .row2 > div { flex: 1; }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 12px 16px; border-radius: 10px; border: none;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active { transform: scale(0.97); opacity: 0.88; }
+        .btn-full { display: flex; width: 100%; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .btn-danger-sm {
+            padding: 5px 10px; border-radius: 7px; border: none;
+            background: #2d1515; color: var(--red);
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-sm { padding: 8px 14px; font-size: 13px; border-radius: 8px; }
+
+        /* ── Day Tabs ── */
+        .day-tabs {
+            display: flex; gap: 7px;
+            overflow-x: auto; scrollbar-width: none;
+            margin-bottom: 14px;
+        }
+        .day-tabs::-webkit-scrollbar { display: none; }
+        .day-tab {
+            padding: 6px 16px; border-radius: 20px; border: none; cursor: pointer;
+            background: var(--surface2); color: var(--muted);
+            font-size: 13px; font-weight: 600; white-space: nowrap;
+            border: 1.5px solid var(--border);
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.15s;
+        }
+        .day-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        /* ── Schedule List ── */
+        .sched-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 0; border-bottom: 1px solid var(--border);
+        }
+        .sched-item:last-child { border-bottom: none; }
+        .sched-info { flex: 1; min-width: 0; }
+        .sched-name { font-weight: 600; font-size: 14px; }
+        .sched-meta { font-size: 12px; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+        /* ── Performer Selection ── */
+        .time-group-hdr {
+            font-size: 11px; font-weight: 800; color: var(--accent2);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            padding: 10px 0 6px; border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+        .perf-item {
+            display: flex; align-items: center; gap: 11px;
+            padding: 11px 12px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px; margin-bottom: 7px; cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .perf-item.sel { border-color: var(--accent); background: #1a1038; }
+        .chk {
+            width: 22px; height: 22px; flex-shrink: 0;
+            border-radius: 50%; border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s; font-size: 12px;
+        }
+        .perf-item.sel .chk { background: var(--accent); border-color: var(--accent); }
+        .chk-mark { display: none; color: #fff; font-weight: 900; font-size: 11px; }
+        .perf-item.sel .chk-mark { display: block; }
+        .perf-details { flex: 1; min-width: 0; }
+        .perf-name { font-weight: 600; font-size: 15px; }
+        .perf-time { font-size: 12px; color: var(--muted); margin-top: 1px; }
+        .stage-pill {
+            font-size: 10px; font-weight: 700; padding: 3px 8px;
+            border-radius: 20px; text-transform: uppercase; letter-spacing: 0.04em;
+            flex-shrink: 0; white-space: nowrap;
+        }
+
+        /* ── People Tags ── */
+        .people-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .ptag {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: var(--surface2); border: 1.5px solid var(--border);
+            border-radius: 20px; padding: 5px 8px 5px 12px; font-size: 13px;
+            cursor: pointer; transition: border-color 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ptag:hover { border-color: var(--accent); }
+        .ptag-x {
+            background: none; border: none; color: var(--muted);
+            cursor: pointer; font-size: 16px; line-height: 1;
+            padding: 0; display: flex; align-items: center;
+        }
+
+        /* ── Grid ── */
+        .grid-wrap { overflow-x: auto; margin: 0 -16px; padding: 0 16px; }
+        table.lineup-grid {
+            border-collapse: collapse; width: max-content; min-width: 100%;
+            font-size: 12px;
+        }
+        .lineup-grid th {
+            background: var(--surface); padding: 9px 10px;
+            font-size: 12px; font-weight: 700; white-space: nowrap;
+            border: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 5;
+            text-align: center;
+        }
+        .lineup-grid th:first-child {
+            position: sticky; left: 0; z-index: 10;
+            text-align: left; min-width: 80px;
+        }
+        .lineup-grid td {
+            border: 1px solid var(--border);
+            padding: 6px 7px; vertical-align: top;
+            min-width: 95px; background: var(--bg);
+        }
+        .lineup-grid td:first-child {
+            position: sticky; left: 0; z-index: 1;
+            background: var(--surface2);
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            white-space: nowrap; text-align: left; min-width: 80px;
+        }
+        .gcell {
+            border-radius: 6px; padding: 5px 7px;
+            font-weight: 600; line-height: 1.3;
+            border-left: 3px solid;
+        }
+        .gcell + .gcell { margin-top: 3px; }
+        .gcell-stage { font-size: 10px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+        .gcell-time  { font-size: 10px; color: var(--muted); }
+        .gcell-empty { color: var(--muted); text-align: center; font-size: 12px; padding: 4px 0; }
+
+        /* ── Analysis ── */
+        .an-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 0; border-bottom: 1px solid var(--border);
+        }
+        .an-item:last-child { border-bottom: none; }
+        .an-rank {
+            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px;
+            background: var(--surface2); color: var(--muted);
+        }
+        .an-info { flex: 1; min-width: 0; }
+        .an-name { font-weight: 600; font-size: 15px; }
+        .an-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .an-bar-track { height: 5px; background: var(--border); border-radius: 3px; margin-top: 6px; }
+        .an-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+        .an-count { font-size: 22px; font-weight: 800; color: var(--accent2); flex-shrink: 0; }
+        .an-pct { font-size: 10px; color: var(--muted); text-align: right; margin-top: 2px; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 88px; left: 50%;
+            transform: translateX(-50%) translateY(6px);
+            background: #1e1035; border: 1px solid var(--accent);
+            color: var(--text); padding: 9px 20px; border-radius: 20px;
+            font-size: 13px; font-weight: 500; z-index: 999;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            white-space: nowrap;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Empty States ── */
+        .empty {
+            text-align: center; padding: 44px 20px; color: var(--muted);
+        }
+        .empty .ei { font-size: 44px; margin-bottom: 12px; }
+        .empty p { font-size: 14px; line-height: 1.6; }
+
+        /* ── Steps ── */
+        .step { display: none; }
+        .step.active { display: block; }
+
+        /* ── Misc ── */
+        .section-label {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+        .day-label {
+            font-size: 12px; font-weight: 700; color: var(--accent2);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            margin-bottom: 10px; margin-top: 16px;
+        }
+        .day-label:first-child { margin-top: 0; }
+        .info-bar {
+            background: var(--surface2); border-radius: 10px; padding: 10px 14px;
+            font-size: 13px; color: var(--muted); margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <!-- ══════════════════════════════════════════════
+         SCHEDULE VIEW
+    ══════════════════════════════════════════════ -->
+    <div id="view-schedule" class="view active">
+        <div class="page-header">
+            <h1>Festival Schedule</h1>
+            <p>Add performers, stages &amp; times</p>
+        </div>
+        <div class="section">
+            <div class="card">
+                <div class="card-title">Add Performer</div>
+
+                <label>Performer Name</label>
+                <input type="text" id="in-performer" placeholder="e.g. Tame Impala" />
+
+                <label>Stage</label>
+                <select id="in-stage">
+                    <option>Main Stage</option>
+                    <option>Second Stage</option>
+                    <option>Tent Stage</option>
+                    <option>Dance Stage</option>
+                    <option>Other</option>
+                </select>
+
+                <label>Day</label>
+                <select id="in-day">
+                    <option>Friday</option>
+                    <option>Saturday</option>
+                    <option>Sunday</option>
+                </select>
+
+                <div class="row2">
+                    <div>
+                        <label>Starts</label>
+                        <input type="time" id="in-start" value="20:00" />
+                    </div>
+                    <div>
+                        <label>Ends</label>
+                        <input type="time" id="in-end" value="21:30" />
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="addPerformer()">Add to Schedule</button>
+            </div>
+
+            <div id="schedule-list"></div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ADD LINEUP VIEW
+    ══════════════════════════════════════════════ -->
+    <div id="view-add" class="view">
+        <div class="page-header">
+            <h1>My Lineup</h1>
+            <p>Pick the sets you want to see</p>
+        </div>
+        <div class="section">
+
+            <!-- Step 1: Name -->
+            <div id="step-name" class="step active">
+                <div class="card">
+                    <label>Your Name</label>
+                    <input type="text" id="in-name" placeholder="Enter your name" />
+                    <button class="btn btn-primary btn-full" onclick="startLineup()">Build My Lineup →</button>
+                </div>
+                <div id="existing-people"></div>
+            </div>
+
+            <!-- Step 2: Select Performers -->
+            <div id="step-select" class="step">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                    <div>
+                        <div style="font-weight:800;font-size:18px" id="lineup-who"></div>
+                        <div style="font-size:12px;color:var(--muted)" id="sel-count">0 sets selected</div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="saveLineup()">Save ✓</button>
+                </div>
+                <div class="day-tabs" id="day-tabs-add"></div>
+                <div id="perf-list"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         GRID VIEW
+    ══════════════════════════════════════════════ -->
+    <div id="view-grid" class="view">
+        <div class="page-header">
+            <h1>Group Grid</h1>
+            <p>Everyone's lineup side by side</p>
+        </div>
+        <div class="section" style="padding-bottom:8px">
+            <div class="day-tabs" id="day-tabs-grid"></div>
+        </div>
+        <div class="section" style="padding-top:0">
+            <div class="grid-wrap">
+                <div id="grid-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ANALYSIS VIEW
+    ══════════════════════════════════════════════ -->
+    <div id="view-analysis" class="view">
+        <div class="page-header">
+            <h1>Top Picks</h1>
+            <p>Most popular sets in the group</p>
+        </div>
+        <div class="section" id="analysis-container"></div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav>
+        <button class="nav-btn active" id="nav-schedule" onclick="showView('schedule')">
+            <span class="nav-icon">🎵</span>Schedule
+        </button>
+        <button class="nav-btn" id="nav-add" onclick="showView('add')">
+            <span class="nav-icon">➕</span>My Lineup
+        </button>
+        <button class="nav-btn" id="nav-grid" onclick="showView('grid')">
+            <span class="nav-icon">📊</span>Grid
+        </button>
+        <button class="nav-btn" id="nav-analysis" onclick="showView('analysis')">
+            <span class="nav-icon">🏆</span>Top Picks
+        </button>
+    </nav>
+
+    <div id="toast"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+
+let S = { schedule: [], people: [], nextId: 1 };
+
+// Stage colour palettes  { bg, text, border }
+const STAGES = {
+    'Main Stage':   { bg:'#2e1065', text:'#c4b5fd', border:'#8b5cf6' },
+    'Second Stage': { bg:'#0c2a4a', text:'#7dd3fc', border:'#0284c7' },
+    'Tent Stage':   { bg:'#052e20', text:'#6ee7b7', border:'#059669' },
+    'Dance Stage':  { bg:'#3b1500', text:'#fcd34d', border:'#d97706' },
+    'Other':        { bg:'#1f2937', text:'#d1d5db', border:'#6b7280' },
+};
+
+function sc(stage) { return STAGES[stage] || STAGES.Other; }
+
+let activePerson = null; // name string while editing
+let addDay = null;
+let gDay   = null;
+
+// ══════════════════════════════════════════════════════
+// PERSISTENCE
+// ══════════════════════════════════════════════════════
+
+function save() { localStorage.setItem('fl_v1', JSON.stringify(S)); }
+
+function load() {
+    const raw = localStorage.getItem('fl_v1');
+    if (raw) {
+        try { S = JSON.parse(raw); return; } catch(e) {}
+    }
+    loadSample();
+}
+
+function loadSample() {
+    const rows = [
+        // Friday
+        ['Glass Animals',    'Main Stage',   'Friday',   '17:00','18:15'],
+        ['Wet Leg',          'Second Stage', 'Friday',   '17:00','17:45'],
+        ['Jungle',           'Tent Stage',   'Friday',   '17:30','18:30'],
+        ['The National',     'Main Stage',   'Friday',   '18:30','20:00'],
+        ['Confidence Man',   'Dance Stage',  'Friday',   '18:30','19:30'],
+        ['Phoebe Bridgers',  'Second Stage', 'Friday',   '20:00','21:30'],
+        ['Radiohead',        'Main Stage',   'Friday',   '21:00','23:00'],
+        ['Four Tet',         'Dance Stage',  'Friday',   '22:00','00:00'],
+        // Saturday
+        ['Soccer Mommy',     'Second Stage', 'Saturday', '15:00','16:00'],
+        ['Khruangbin',       'Tent Stage',   'Saturday', '16:00','17:15'],
+        ['Bicep',            'Dance Stage',  'Saturday', '16:30','18:00'],
+        ['Tame Impala',      'Main Stage',   'Saturday', '17:00','18:30'],
+        ['Yard Act',         'Second Stage', 'Saturday', '18:00','19:00'],
+        ['LCD Soundsystem',  'Main Stage',   'Saturday', '19:00','21:00'],
+        ['Fred again..',     'Dance Stage',  'Saturday', '20:00','22:00'],
+        ['Arctic Monkeys',   'Main Stage',   'Saturday', '21:30','23:30'],
+        // Sunday
+        ['The War On Drugs', 'Second Stage', 'Sunday',   '16:00','17:15'],
+        ['Caroline Polachek','Tent Stage',   'Sunday',   '17:00','18:15'],
+        ['Peggy Gou',        'Dance Stage',  'Sunday',   '18:00','20:00'],
+        ['Boygenius',        'Main Stage',   'Sunday',   '18:30','20:00'],
+        ['Mitski',           'Second Stage', 'Sunday',   '20:00','21:15'],
+        ['The Killers',      'Main Stage',   'Sunday',   '21:00','23:00'],
+    ];
+    S.schedule = rows.map(([performer, stage, day, startTime, endTime], i) =>
+        ({ id: i + 1, performer, stage, day, startTime, endTime }));
+    S.nextId = rows.length + 1;
+    save();
+}
+
+// ══════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════
+
+function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+
+    if (name === 'schedule') renderSchedule();
+    if (name === 'add')      renderAddHome();
+    if (name === 'grid')     renderGridView();
+    if (name === 'analysis') renderAnalysis();
+}
+
+// ══════════════════════════════════════════════════════
+// SCHEDULE
+// ══════════════════════════════════════════════════════
+
+function addPerformer() {
+    const performer = q('in-performer').value.trim();
+    if (!performer) { toast('Enter a performer name'); return; }
+    const stage     = q('in-stage').value;
+    const day       = q('in-day').value;
+    const startTime = q('in-start').value;
+    const endTime   = q('in-end').value;
+    if (!startTime || !endTime) { toast('Enter start and end times'); return; }
+
+    S.schedule.push({ id: S.nextId++, performer, stage, day, startTime, endTime });
+    save();
+    q('in-performer').value = '';
+    renderSchedule();
+    toast(performer + ' added!');
+}
+
+function removePerformer(id) {
+    S.schedule = S.schedule.filter(s => s.id !== id);
+    S.people.forEach(p => { p.selections = p.selections.filter(x => x !== id); });
+    save();
+    renderSchedule();
+}
+
+function renderSchedule() {
+    const el = q('schedule-list');
+    if (S.schedule.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="ei">🎸</div><p>No performers yet.<br>Add them above to get started.</p></div>';
+        return;
+    }
+
+    const DAY_ORDER = ['Friday', 'Saturday', 'Sunday'];
+    const byDay = {};
+    S.schedule.forEach(s => { (byDay[s.day] = byDay[s.day] || []).push(s); });
+
+    let html = '';
+    DAY_ORDER.forEach(day => {
+        const items = (byDay[day] || []).slice().sort((a,b) => a.startTime.localeCompare(b.startTime));
+        if (!items.length) return;
+        html += `<div class="card"><div class="card-title" style="color:var(--accent2)">${day}</div>`;
+        items.forEach(item => {
+            const c = sc(item.stage);
+            html += `<div class="sched-item">
+                <div class="sched-info">
+                    <div class="sched-name">${h(item.performer)}</div>
+                    <div class="sched-meta">
+                        <span class="dot" style="background:${c.border}"></span>
+                        ${h(item.stage)} &nbsp;·&nbsp; ${fmt(item.startTime)} – ${fmt(item.endTime)}
+                    </div>
+                </div>
+                <button class="btn-danger-sm" onclick="removePerformer(${item.id})">✕ Remove</button>
+            </div>`;
+        });
+        html += '</div>';
+    });
+
+    el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+// ADD LINEUP
+// ══════════════════════════════════════════════════════
+
+function renderAddHome() {
+    showStep('name');
+    q('in-name').value = '';
+
+    const el = q('existing-people');
+    if (!S.people.length) { el.innerHTML = ''; return; }
+
+    let html = '<div class="card"><div class="section-label" style="margin-bottom:8px">Edit an existing lineup</div><div class="people-tags">';
+    S.people.forEach(p => {
+        html += `<div class="ptag" onclick="editPerson('${h(p.name)}')">
+            ${h(p.name)}
+            <button class="ptag-x" onclick="event.stopPropagation();removePerson('${h(p.name)}')">×</button>
+        </div>`;
+    });
+    html += '</div></div>';
+    el.innerHTML = html;
+}
+
+function startLineup() {
+    const name = q('in-name').value.trim();
+    if (!name) { toast('Enter your name first'); return; }
+    if (!S.schedule.length) { toast('Add performers to the schedule first'); return; }
+
+    activePerson = name;
+    q('lineup-who').textContent = name + "'s Lineup";
+
+    const days = getDays();
+    if (!days.includes(addDay)) addDay = days[0];
+
+    renderAddDayTabs();
+    renderPerfList();
+    showStep('select');
+}
+
+function editPerson(name) {
+    q('in-name').value = name;
+    startLineup();
+}
+
+function removePerson(name) {
+    S.people = S.people.filter(p => p.name !== name);
+    save();
+    renderAddHome();
+    toast(name + ' removed');
+}
+
+function renderAddDayTabs() {
+    const days = getDays();
+    q('day-tabs-add').innerHTML = days.map(d =>
+        `<button class="day-tab ${d === addDay ? 'active' : ''}" onclick="setAddDay('${d}')">${d}</button>`
+    ).join('');
+}
+
+function setAddDay(day) {
+    addDay = day;
+    renderAddDayTabs();
+    renderPerfList();
+}
+
+function renderPerfList() {
+    const el = q('perf-list');
+    const sels = getSelections(activePerson);
+
+    const items = S.schedule
+        .filter(s => s.day === addDay)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    if (!items.length) {
+        el.innerHTML = '<div class="empty"><p>No performers scheduled for this day.</p></div>';
+        updateSelCount();
+        return;
+    }
+
+    // group by start time
+    const groups = {};
+    items.forEach(s => { (groups[s.startTime] = groups[s.startTime] || []).push(s); });
+
+    let html = '';
+    Object.keys(groups).sort().forEach(t => {
+        html += `<div style="margin-bottom:16px"><div class="time-group-hdr">⏰ ${fmt(t)}</div>`;
+        groups[t].forEach(item => {
+            const sel = sels.includes(item.id);
+            const c = sc(item.stage);
+            html += `<div class="perf-item ${sel ? 'sel' : ''}" onclick="toggleSel(${item.id})">
+                <div class="chk"><span class="chk-mark">✓</span></div>
+                <div class="perf-details">
+                    <div class="perf-name">${h(item.performer)}</div>
+                    <div class="perf-time">${fmt(item.startTime)} – ${fmt(item.endTime)}</div>
+                </div>
+                <div class="stage-pill" style="background:${c.bg};color:${c.text}">${h(item.stage)}</div>
+            </div>`;
+        });
+        html += '</div>';
+    });
+
+    el.innerHTML = html;
+    updateSelCount();
+}
+
+function toggleSel(id) {
+    let p = S.people.find(x => x.name === activePerson);
+    if (!p) { p = { name: activePerson, selections: [] }; S.people.push(p); }
+    const idx = p.selections.indexOf(id);
+    if (idx === -1) p.selections.push(id);
+    else p.selections.splice(idx, 1);
+    save();
+    renderPerfList();
+}
+
+function updateSelCount() {
+    const n = getSelections(activePerson).length;
+    q('sel-count').textContent = n === 0 ? 'No sets selected' : n + ' set' + (n > 1 ? 's' : '') + ' selected';
+}
+
+function saveLineup() {
+    toast('Lineup saved!');
+    activePerson = null;
+    renderAddHome();
+}
+
+function getSelections(name) {
+    const p = S.people.find(x => x.name === name);
+    return p ? p.selections : [];
+}
+
+function showStep(id) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    q('step-' + id).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════
+// GRID VIEW
+// ══════════════════════════════════════════════════════
+
+function renderGridView() {
+    const days = getDays();
+    if (!days.includes(gDay)) gDay = days[0] || null;
+    renderGridDayTabs();
+    renderGrid();
+}
+
+function renderGridDayTabs() {
+    const days = getDays();
+    q('day-tabs-grid').innerHTML = days.map(d =>
+        `<button class="day-tab ${d === gDay ? 'active' : ''}" onclick="setGridDay('${d}')">${d}</button>`
+    ).join('');
+}
+
+function setGridDay(day) {
+    gDay = day;
+    renderGridDayTabs();
+    renderGrid();
+}
+
+function renderGrid() {
+    const el = q('grid-container');
+
+    if (!S.people.length) {
+        el.innerHTML = '<div class="empty"><div class="ei">👥</div><p>No lineups yet.<br>Go to "My Lineup" to add yours!</p></div>';
+        return;
+    }
+
+    const dayItems = S.schedule
+        .filter(s => s.day === gDay)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    if (!dayItems.length) {
+        el.innerHTML = '<div class="empty"><p>No performers on this day.</p></div>';
+        return;
+    }
+
+    // All unique start times as rows
+    const timeSlots = [...new Set(dayItems.map(s => s.startTime))].sort();
+
+    let html = '<table class="lineup-grid"><thead><tr><th>Time</th>';
+    S.people.forEach(p => { html += `<th>${h(p.name)}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    timeSlots.forEach(slot => {
+        const slotItems = dayItems.filter(s => s.startTime === slot);
+        html += '<tr>';
+        // Time col
+        html += `<td><strong>${fmt(slot)}</strong><div style="font-size:10px;font-weight:400;margin-top:1px">${gDay}</div></td>`;
+
+        S.people.forEach(person => {
+            const chosen = slotItems.filter(item => person.selections.includes(item.id));
+            if (!chosen.length) {
+                html += '<td><div class="gcell-empty">—</div></td>';
+            } else {
+                html += '<td>';
+                chosen.forEach(item => {
+                    const c = sc(item.stage);
+                    html += `<div class="gcell" style="background:${c.bg};border-color:${c.border}">
+                        <div style="color:${c.text}">${h(item.performer)}</div>
+                        <div class="gcell-stage">${h(item.stage)}</div>
+                        <div class="gcell-time">${fmt(item.startTime)}–${fmt(item.endTime)}</div>
+                    </div>`;
+                });
+                html += '</td>';
+            }
+        });
+
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+// ANALYSIS
+// ══════════════════════════════════════════════════════
+
+function renderAnalysis() {
+    const el = q('analysis-container');
+
+    if (!S.people.length) {
+        el.innerHTML = '<div class="empty"><div class="ei">📊</div><p>No lineups yet.<br>Add some lineups to see who's popular!</p></div>';
+        return;
+    }
+
+    const counts = {};
+    S.schedule.forEach(s => { counts[s.id] = 0; });
+    S.people.forEach(p => p.selections.forEach(id => { if (counts[id] !== undefined) counts[id]++; }));
+
+    const ranked = S.schedule
+        .filter(s => counts[s.id] > 0)
+        .sort((a, b) => counts[b.id] - counts[a.id] || a.startTime.localeCompare(b.startTime));
+
+    if (!ranked.length) {
+        el.innerHTML = '<div class="empty"><div class="ei">🤔</div><p>Nobody has selected any performers yet!</p></div>';
+        return;
+    }
+
+    const maxCount = counts[ranked[0].id];
+    const total    = S.people.length;
+    const medals   = ['🥇','🥈','🥉'];
+
+    const DAY_ORDER = ['Friday','Saturday','Sunday'];
+    let html = `<div class="info-bar">👥 ${total} ${total > 1 ? 'people' : 'person'} in the group</div>`;
+
+    DAY_ORDER.forEach(day => {
+        const dayR = ranked.filter(s => s.day === day);
+        if (!dayR.length) return;
+
+        html += `<div class="day-label">${day}</div><div class="card">`;
+        dayR.forEach((item, i) => {
+            const cnt   = counts[item.id];
+            const pct   = Math.round((cnt / total) * 100);
+            const grank = ranked.indexOf(item);
+            const badge = medals[grank] || (grank + 1);
+            const c = sc(item.stage);
+
+            html += `<div class="an-item">
+                <div class="an-rank">${badge}</div>
+                <div class="an-info">
+                    <div class="an-name">${h(item.performer)}</div>
+                    <div class="an-sub">
+                        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${c.border};margin-right:4px;vertical-align:middle"></span>
+                        ${h(item.stage)} · ${fmt(item.startTime)}
+                    </div>
+                    <div class="an-bar-track">
+                        <div class="an-bar" style="width:${(cnt/maxCount)*100}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="an-count">${cnt}</div>
+                    <div class="an-pct">${pct}%</div>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+    });
+
+    el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+
+function getDays() {
+    const order = ['Friday','Saturday','Sunday'];
+    const present = new Set(S.schedule.map(s => s.day));
+    return order.filter(d => present.has(d));
+}
+
+function fmt(t) {
+    if (!t) return '';
+    const [hh, mm] = t.split(':').map(Number);
+    const ampm = hh >= 12 ? 'PM' : 'AM';
+    return (hh % 12 || 12) + ':' + String(mm).padStart(2,'0') + ' ' + ampm;
+}
+
+function h(str) {
+    return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function q(id) { return document.getElementById(id); }
+
+function toast(msg) {
+    const el = q('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+
+load();
+renderSchedule();
+</script>
+</body>
+</html>

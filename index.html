@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Coachella 2026 · Lineup Planner</title>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -283,6 +286,42 @@
             font-size: 13px; color: var(--muted); margin-bottom: 14px;
         }
 
+        /* ── Sync status bar ── */
+        #status-bar {
+            position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 500px; z-index: 200;
+            padding: 7px 14px; font-size: 12px; font-weight: 600;
+            display: flex; align-items: center; gap: 7px;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+        #status-bar.offline  { background:#2d1000; color:#ff9f43; border-bottom:1px solid #7c3d00; }
+        #status-bar.syncing  { background:#001e3d; color:#60c8ff; border-bottom:1px solid #00558a; }
+        #status-bar.hidden   { opacity:0; pointer-events:none; }
+        .status-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+        /* ── Loading / Setup overlay ── */
+        #overlay {
+            position: fixed; inset: 0; background: var(--bg);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 300; padding: 32px; text-align: center;
+        }
+        #overlay.hidden { display: none; }
+        .overlay-icon { font-size: 52px; margin-bottom: 16px; }
+        .overlay-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+        .overlay-body { font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 340px; }
+        .overlay-body a { color: #ff79c6; }
+        .setup-steps {
+            text-align: left; margin-top: 20px; width: 100%; max-width: 340px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px;
+        }
+        .setup-steps li { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.4; list-style: none; padding-left: 0; }
+        .setup-steps li::before { content: attr(data-n) ' '; font-weight: 800; color: #ff79c6; }
+        .spin { animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         /* ── Headliner badge ── */
         .headliner-badge {
             font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 8px;
@@ -293,6 +332,16 @@
     </style>
 </head>
 <body>
+<!-- Loading / Setup overlay -->
+<div id="overlay">
+    <div class="overlay-icon spin">🎪</div>
+    <div class="overlay-title">Connecting…</div>
+    <div class="overlay-body">Loading the shared lineup.</div>
+</div>
+
+<!-- Sync status bar -->
+<div id="status-bar" class="hidden"></div>
+
 <div id="app">
 
     <!-- ══════════════════════════════════════════════
@@ -424,15 +473,117 @@ let gDay     = null;
 let activeStageFilter = null;
 
 // ══════════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════════════════
+// Paste your Firebase project config here.
+// Get it from: Firebase Console → Project Settings → Your apps → SDK setup
+const FIREBASE_CONFIG = {
+    apiKey:            "PASTE_YOUR_API_KEY",
+    authDomain:        "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL:       "https://PASTE_YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId:         "PASTE_YOUR_PROJECT_ID",
+    storageBucket:     "PASTE_YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "PASTE_YOUR_SENDER_ID",
+    appId:             "PASTE_YOUR_APP_ID"
+};
+
+const IS_CONFIGURED = !FIREBASE_CONFIG.apiKey.startsWith('PASTE_');
+
+// ══════════════════════════════════════════════════════
 // DATA
 // ══════════════════════════════════════════════════════
 
-function save() { localStorage.setItem('coachella26_v1', JSON.stringify(S)); }
+let db  = null;
+let currentView = 'lineup';
+
+function sanitizeKey(name) {
+    // Firebase keys cannot contain . # $ [ ] /
+    return name.replace(/[.#$[\]/]/g, '_');
+}
+
+function save() {
+    if (!db) return;
+    const obj = {};
+    S.people.forEach(p => { obj[sanitizeKey(p.name)] = { name: p.name, selections: p.selections }; });
+    db.ref('coachella26/people').set(obj);
+}
+
+function initFirebase() {
+    if (!IS_CONFIGURED) {
+        showSetupScreen();
+        return;
+    }
+
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+
+    // Seed schedule (client-side only, never stored in Firebase)
+    seedData();
+
+    // Connection indicator
+    db.ref('.info/connected').on('value', snap => {
+        setStatus(snap.val() ? 'connected' : 'offline');
+    });
+
+    // Real-time listener — single source of truth for people/picks
+    let firstLoad = true;
+    db.ref('coachella26/people').on('value', snap => {
+        const data = snap.val();
+        S.people = data ? Object.values(data) : [];
+        if (firstLoad) {
+            firstLoad = false;
+            hideOverlay();
+            renderLineupView(); // show lineup tab on first load
+        } else {
+            refreshCurrentView();
+        }
+    }, err => {
+        console.error(err);
+        hideOverlay();
+        renderLineupView();
+    });
+}
+
+function setStatus(state) {
+    const bar = document.getElementById('status-bar');
+    if (state === 'connected') {
+        bar.className = 'hidden';
+    } else {
+        bar.className = 'offline';
+        bar.innerHTML = '<span class="status-dot" style="background:#ff9f43"></span>Offline — picks will sync when you reconnect';
+    }
+}
+
+function hideOverlay() {
+    document.getElementById('overlay').classList.add('hidden');
+}
+
+function showSetupScreen() {
+    const overlay = document.getElementById('overlay');
+    overlay.innerHTML = `
+        <div class="overlay-icon">⚙️</div>
+        <div class="overlay-title">Firebase Setup Required</div>
+        <div class="overlay-body">
+            Connect a free Firebase database so everyone's picks are shared across devices.
+            <ol class="setup-steps">
+                <li data-n="1">Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> and create a project</li>
+                <li data-n="2">Click <strong>Build → Realtime Database</strong> and create a database (start in test mode)</li>
+                <li data-n="3">Go to <strong>Project Settings → Your apps</strong>, add a web app, and copy the config</li>
+                <li data-n="4">Paste the config into the <code>FIREBASE_CONFIG</code> section at the top of the script in this file</li>
+                <li data-n="5">Push the updated file to GitHub</li>
+            </ol>
+        </div>`;
+}
+
+function refreshCurrentView() {
+    if (currentView === 'lineup')   renderLineupView();
+    if (currentView === 'add')      renderAddHome();
+    if (currentView === 'grid')     renderGrid();
+    if (currentView === 'analysis') renderAnalysis();
+}
 
 function load() {
-    const raw = localStorage.getItem('coachella26_v1');
-    if (raw) { try { S = JSON.parse(raw); return; } catch(e) {} }
-    seedData();
+    // No-op: data comes from Firebase real-time listener
 }
 
 function seedData() {
@@ -620,7 +771,7 @@ function seedData() {
     S.schedule = deduped.map(([performer, stage, day, startTime, endTime], i) =>
         ({ id: i + 1, performer, stage, day, startTime, endTime }));
     S.nextId = S.schedule.length + 1;
-    save();
+    // Schedule is static — not stored in Firebase
 }
 
 // ══════════════════════════════════════════════════════
@@ -628,6 +779,7 @@ function seedData() {
 // ══════════════════════════════════════════════════════
 
 function showView(name) {
+    currentView = name;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('view-' + name).classList.add('active');
@@ -1023,8 +1175,7 @@ function toast(msg) {
 // INIT
 // ══════════════════════════════════════════════════════
 
-load();
-renderLineupView();
+initFirebase();
 </script>
 </body>
 </html>

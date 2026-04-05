@@ -192,6 +192,7 @@
             cursor: pointer; transition: border-color 0.15s;
         }
         .ptag:hover { border-color: #ff79c6; }
+        .ptag-renaming { border-color: #ff79c6; opacity: 0.6; cursor: default; }
         .ptag-x {
             background: none; border: none; color: var(--muted);
             cursor: pointer; font-size: 16px; line-height: 1;
@@ -416,6 +417,7 @@ function sc(stage) { return STAGE_META[stage] || STAGE_META['Quasar']; }
 const HEADLINERS = { 'Sabrina Carpenter': true, 'Justin Bieber': true, 'Karol G': true, 'Anyma (Æden)': true };
 
 let activePerson = null;
+let renamingPerson = null;
 let addDay   = null;
 let lineupDay = null;
 let gDay     = null;
@@ -713,12 +715,35 @@ function renderAddHome() {
     const el = document.getElementById('existing-people');
     if (!S.people.length) { el.innerHTML = ''; return; }
 
-    let html = '<div class="card"><div class="card-title" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em">Edit an existing lineup</div><div class="people-tags">';
+    let html = '<div class="card"><div class="card-title" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em">Edit an existing lineup</div>';
+
+    // Rename inline form
+    if (renamingPerson) {
+        html += `<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+            <input type="text" id="rename-input" value="${h(renamingPerson)}"
+                style="flex:1;margin-bottom:0;font-size:15px"
+                onkeydown="if(event.key==='Enter')confirmRename();if(event.key==='Escape')cancelRename()" />
+            <button class="btn btn-primary btn-sm" onclick="confirmRename()">✓</button>
+            <button class="btn btn-sm" style="background:var(--surface2);color:var(--text);border:1px solid var(--border)" onclick="cancelRename()">✕</button>
+        </div>`;
+    }
+
+    html += '<div class="people-tags">';
     S.people.forEach(p => {
-        html += `<div class="ptag" onclick="editPerson('${h(p.name)}')">${h(p.name)}<button class="ptag-x" onclick="event.stopPropagation();removePerson('${h(p.name)}')">×</button></div>`;
+        const isRenaming = p.name === renamingPerson;
+        html += `<div class="ptag ${isRenaming ? 'ptag-renaming' : ''}" onclick="${isRenaming ? '' : `editPerson('${h(p.name)}')`}">
+            ${h(p.name)}
+            <button class="ptag-x" title="Rename" onclick="event.stopPropagation();startRename('${h(p.name)}')">✏️</button>
+            <button class="ptag-x" onclick="event.stopPropagation();removePerson('${h(p.name)}')">×</button>
+        </div>`;
     });
     html += '</div></div>';
     el.innerHTML = html;
+
+    if (renamingPerson) {
+        const input = document.getElementById('rename-input');
+        if (input) { input.focus(); input.select(); }
+    }
 }
 
 function startLineup() {
@@ -742,7 +767,33 @@ function editPerson(name) {
 
 function removePerson(name) {
     S.people = S.people.filter(p => p.name !== name);
+    if (renamingPerson === name) renamingPerson = null;
     save(); renderAddHome(); toast(name + ' removed');
+}
+
+function startRename(name) {
+    renamingPerson = name;
+    renderAddHome();
+}
+
+function cancelRename() {
+    renamingPerson = null;
+    renderAddHome();
+}
+
+function confirmRename() {
+    const input = document.getElementById('rename-input');
+    if (!input) return;
+    const newName = input.value.trim();
+    if (!newName) { toast('Name cannot be empty'); return; }
+    if (newName === renamingPerson) { renamingPerson = null; renderAddHome(); return; }
+    if (S.people.find(p => p.name === newName)) { toast('That name is already taken'); return; }
+    const person = S.people.find(p => p.name === renamingPerson);
+    if (person) person.name = newName;
+    save();
+    renamingPerson = null;
+    renderAddHome();
+    toast('Renamed to ' + newName + ' ✓');
 }
 
 function renderAddDayTabs() {

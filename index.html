@@ -211,7 +211,7 @@
         }
         /* ── Timeline Grid ── */
         .tl-header {
-            display: flex; background: var(--surface);
+            display: flex; min-width: max-content; background: var(--surface);
             border: 1px solid var(--border); border-radius: 10px 10px 0 0;
             position: sticky; top: 0; z-index: 15;
         }
@@ -225,7 +225,7 @@
             border-right: 1px solid var(--border);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .tl-body { display: flex; border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; overflow: hidden; }
+        .tl-body { display: flex; min-width: max-content; border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; }
         .tl-ruler {
             min-width: 42px; flex-shrink: 0;
             position: sticky; left: 0; z-index: 5;
@@ -240,7 +240,7 @@
             transform: translateY(-50%); line-height: 1;
             text-align: right;
         }
-        .tl-cols { display: flex; flex: 1; }
+        .tl-cols { display: flex; flex: 0 0 auto; }
         .tl-col  { min-width: 140px; flex: 1; position: relative; border-right: 1px solid var(--border); }
         .tl-col:last-child { border-right: none; }
         .tl-hline {

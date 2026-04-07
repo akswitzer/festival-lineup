@@ -203,7 +203,12 @@
         }
 
         /* ── Grid ── */
-        .grid-wrap { overflow-x: auto; }
+        .grid-wrap {
+            overflow-x: auto; overflow-y: auto;
+            max-height: calc(100dvh - 210px);
+            -webkit-overflow-scrolling: touch;
+            border-radius: 10px;
+        }
         /* ── Timeline Grid ── */
         .tl-header {
             display: flex; background: var(--surface);
@@ -215,7 +220,7 @@
             border-right: 1px solid var(--border);
         }
         .tl-hperson {
-            min-width: 110px; flex: 1; padding: 8px 6px;
+            min-width: 140px; flex: 1; padding: 8px 6px;
             font-size: 11px; font-weight: 700; text-align: center;
             border-right: 1px solid var(--border);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -236,7 +241,7 @@
             text-align: right;
         }
         .tl-cols { display: flex; flex: 1; }
-        .tl-col  { min-width: 110px; flex: 1; position: relative; border-right: 1px solid var(--border); }
+        .tl-col  { min-width: 140px; flex: 1; position: relative; border-right: 1px solid var(--border); }
         .tl-col:last-child { border-right: none; }
         .tl-hline {
             position: absolute; left: 0; right: 0;
@@ -879,7 +884,7 @@ function renderLineupList() {
     items.forEach(s => { (groups[s.startTime] = groups[s.startTime] || []).push(s); });
 
     let html = '';
-    Object.keys(groups).sort().forEach(t => {
+    Object.keys(groups).sort((a,b) => festMins(a) - festMins(b)).forEach(t => {
         html += `<div style="margin-bottom:16px"><div class="time-group-hdr">⏰ ${fmt(t)}</div>`;
         groups[t].forEach(item => {
             const c = sc(item.stage);
@@ -1007,7 +1012,7 @@ function renderPerfList() {
     items.forEach(s => { (groups[s.startTime] = groups[s.startTime] || []).push(s); });
 
     let html = '';
-    Object.keys(groups).sort().forEach(t => {
+    Object.keys(groups).sort((a,b) => festMins(a) - festMins(b)).forEach(t => {
         html += `<div style="margin-bottom:16px"><div class="time-group-hdr">⏰ ${fmt(t)}</div>`;
         groups[t].forEach(item => {
             const sel = sels.includes(item.id);

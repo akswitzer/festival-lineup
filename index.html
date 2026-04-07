@@ -799,7 +799,7 @@ function showView(name) {
     document.getElementById('nav-' + name).classList.add('active');
 
     if (name === 'lineup')   renderLineupView();
-    if (name === 'add')      renderAddHome();
+    if (name === 'add')      activePerson ? (showStep('select'), renderPerfList()) : renderAddHome();
     if (name === 'grid')     renderGridView();
     if (name === 'analysis') renderAnalysis();
 }
@@ -966,6 +966,7 @@ function renderAddDayTabs() {
 }
 
 function renderPerfList() {
+    showStep('select');
     const el = document.getElementById('perf-list');
     const sels = getSels(activePerson);
 

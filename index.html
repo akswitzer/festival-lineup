@@ -463,7 +463,7 @@ const STAGE_META = {
 
 function sc(stage) { return STAGE_META[stage] || STAGE_META['Quasar']; }
 
-const HEADLINERS = { 'Sabrina Carpenter': true, 'Justin Bieber': true, 'Karol G': true, 'Anyma (Æden)': true };
+const HEADLINERS = { 'Sabrina Carpenter': true, 'Justin Bieber': true, 'KAROL G': true, 'Anyma': true };
 
 let activePerson = null;
 let renamingPerson = null;
@@ -588,188 +588,201 @@ function load() {
 
 function seedData() {
     // [performer, stage, day, startTime, endTime]
-    const rows = [
+    // Times in 24h format. Post-midnight times (e.g. 00:05) are after midnight of that day.
+    S.schedule = [
         // ── DAY 1 · FRIDAY ──────────────────────────────────
         // Coachella Stage
-        ['Sabrina Carpenter', 'Coachella Stage', 'Day 1', '23:15', '01:00'],
-        ['The xx',            'Coachella Stage', 'Day 1', '21:30', '22:45'],
-        ['Foster the People', 'Coachella Stage', 'Day 1', '19:45', '20:45'],
-        ['Teddy Swims',       'Coachella Stage', 'Day 1', '18:15', '19:15'],
-        ['Devo',              'Coachella Stage', 'Day 1', '16:30', '17:30'],
-        ['Joyce Manor',       'Coachella Stage', 'Day 1', '14:45', '15:30'],
-        ['Levity',            'Coachella Stage', 'Day 1', '13:00', '13:45'],
+        { performer: 'Anyma',                    stage: 'Coachella Stage', day: 'Day 1', startTime: '00:00', endTime: '01:00' },
+        { performer: 'Sabrina Carpenter',         stage: 'Coachella Stage', day: 'Day 1', startTime: '21:05', endTime: '22:35' },
+        { performer: 'The xx',                    stage: 'Coachella Stage', day: 'Day 1', startTime: '19:00', endTime: '19:55' },
+        { performer: 'Teddy Swims',               stage: 'Coachella Stage', day: 'Day 1', startTime: '17:30', endTime: '18:20' },
+        { performer: 'Record Safari',             stage: 'Coachella Stage', day: 'Day 1', startTime: '16:15', endTime: '17:20' },
         // Outdoor Theatre
-        ['Disclosure',        'Outdoor Theatre', 'Day 1', '22:00', '23:15'],
-        ['Lykke Li',          'Outdoor Theatre', 'Day 1', '20:15', '21:15'],
-        ['Blood Orange',      'Outdoor Theatre', 'Day 1', '18:30', '19:30'],
-        ['Dijon',             'Outdoor Theatre', 'Day 1', '17:00', '18:00'],
-        ['CMAT',              'Outdoor Theatre', 'Day 1', '15:15', '16:00'],
-        ['flowerovlove',      'Outdoor Theatre', 'Day 1', '13:30', '14:15'],
-        // Sahara
-        ['Nine Inch Noize',   'Sahara',          'Day 1', '22:30', '00:00'],
-        ['Groove Armada',     'Sahara',          'Day 1', '20:45', '22:00'],
-        ['Gordo',             'Sahara',          'Day 1', '19:00', '20:15'],
-        ['Kettama',           'Sahara',          'Day 1', '17:15', '18:15'],
-        ['HUGEL',             'Sahara',          'Day 1', '15:30', '16:30'],
-        ['Max Styler',        'Sahara',          'Day 1', '13:45', '14:45'],
-        // Mojave
-        ['Turnstile',         'Mojave',          'Day 1', '21:45', '23:00'],
-        ['Ethel Cain',        'Mojave',          'Day 1', '20:00', '21:15'],
-        ['Hot Mulligan',      'Mojave',          'Day 1', '18:15', '19:15'],
-        ['Fleshwater',        'Mojave',          'Day 1', '16:45', '17:45'],
-        ['Wednesday',         'Mojave',          'Day 1', '15:00', '16:00'],
-        ['The Two Lips',      'Mojave',          'Day 1', '13:15', '14:00'],
-        // Gobi
-        ['Central Cee',       'Gobi',            'Day 1', '21:00', '22:00'],
-        ['Sexyy Red',         'Gobi',            'Day 1', '19:15', '20:15'],
-        ['Katseye',           'Gobi',            'Day 1', '17:30', '18:30'],
-        ['BINI',              'Gobi',            'Day 1', '15:45', '16:45'],
-        ['Creepy Nuts',       'Gobi',            'Day 1', '14:00', '14:45'],
-        ['Joost',             'Gobi',            'Day 1', '12:30', '13:15'],
+        { performer: 'Disclosure',                stage: 'Outdoor Theatre', day: 'Day 1', startTime: '22:35', endTime: '23:50' },
+        { performer: 'Dijon',                     stage: 'Outdoor Theatre', day: 'Day 1', startTime: '18:40', endTime: '19:30' },
+        { performer: 'Lykke Li',                  stage: 'Outdoor Theatre', day: 'Day 1', startTime: '17:20', endTime: '18:10' },
+        { performer: 'Dabeull',                   stage: 'Outdoor Theatre', day: 'Day 1', startTime: '16:00', endTime: '16:50' },
+        { performer: 'Tiffany Tyson',             stage: 'Outdoor Theatre', day: 'Day 1', startTime: '14:50', endTime: '15:50' },
         // Sonora
-        ['Moby',              'Sonora',          'Day 1', '22:15', '23:15'],
-        ['Slayyyter',         'Sonora',          'Day 1', '20:30', '21:30'],
-        ['Dabeull',           'Sonora',          'Day 1', '18:45', '19:45'],
-        ['Carolina Durante',  'Sonora',          'Day 1', '17:00', '17:45'],
-        ['Ninajirachi',       'Sonora',          'Day 1', '15:15', '16:00'],
-        ['Febuary',           'Sonora',          'Day 1', '13:30', '14:15'],
+        { performer: 'Not For Radio',             stage: 'Sonora',          day: 'Day 1', startTime: '23:50', endTime: '00:50' },
+        { performer: 'Hot Mulligan',              stage: 'Sonora',          day: 'Day 1', startTime: '22:00', endTime: '22:45' },
+        { performer: 'Cachirula & Loojan',        stage: 'Sonora',          day: 'Day 1', startTime: '20:25', endTime: '21:05' },
+        { performer: 'Ninajirachi',               stage: 'Sonora',          day: 'Day 1', startTime: '19:10', endTime: '20:00' },
+        { performer: 'The Two Lips',              stage: 'Sonora',          day: 'Day 1', startTime: '18:00', endTime: '18:40' },
+        { performer: 'Fleshwater',                stage: 'Sonora',          day: 'Day 1', startTime: '16:50', endTime: '17:30' },
+        { performer: 'Wednesday',                 stage: 'Sonora',          day: 'Day 1', startTime: '15:40', endTime: '16:20' },
+        { performer: 'Carolina Durante',          stage: 'Sonora',          day: 'Day 1', startTime: '14:35', endTime: '15:15' },
+        { performer: 'Febuary',                   stage: 'Sonora',          day: 'Day 1', startTime: '13:40', endTime: '14:10' },
+        { performer: 'Doom Dave',                 stage: 'Sonora',          day: 'Day 1', startTime: '13:00', endTime: '13:40' },
+        // Gobi
+        { performer: 'Creepy Nuts',               stage: 'Gobi',            day: 'Day 1', startTime: '23:05', endTime: '23:55' },
+        { performer: 'Joost',                     stage: 'Gobi',            day: 'Day 1', startTime: '21:50', endTime: '22:35' },
+        { performer: 'Holly Humberstone',         stage: 'Gobi',            day: 'Day 1', startTime: '20:25', endTime: '21:10' },
+        { performer: 'fakemink',                  stage: 'Gobi',            day: 'Day 1', startTime: '19:20', endTime: '20:00' },
+        { performer: 'CMAT',                      stage: 'Gobi',            day: 'Day 1', startTime: '18:15', endTime: '18:55' },
+        { performer: 'Joyce Manor',               stage: 'Gobi',            day: 'Day 1', startTime: '17:10', endTime: '17:50' },
+        { performer: 'NewDad',                    stage: 'Gobi',            day: 'Day 1', startTime: '16:00', endTime: '16:40' },
+        { performer: 'Bob Baker Marionettes',     stage: 'Gobi',            day: 'Day 1', startTime: '14:55', endTime: '15:35' },
+        { performer: 'Cahuilla Bird Singers and Dancers', stage: 'Gobi',   day: 'Day 1', startTime: '14:15', endTime: '14:45' },
+        // Mojave
+        { performer: 'Blood Orange',              stage: 'Mojave',          day: 'Day 1', startTime: '23:55', endTime: '00:45' },
+        { performer: 'Ethel Cain',                stage: 'Mojave',          day: 'Day 1', startTime: '22:35', endTime: '23:25' },
+        { performer: 'Moby',                      stage: 'Mojave',          day: 'Day 1', startTime: '20:10', endTime: '21:00' },
+        { performer: 'Devo',                      stage: 'Mojave',          day: 'Day 1', startTime: '18:45', endTime: '19:40' },
+        { performer: 'Central Cee',               stage: 'Mojave',          day: 'Day 1', startTime: '17:30', endTime: '18:15' },
+        { performer: 'BINI',                      stage: 'Mojave',          day: 'Day 1', startTime: '16:15', endTime: '17:00' },
+        { performer: 'Slayyyter',                 stage: 'Mojave',          day: 'Day 1', startTime: '15:00', endTime: '15:45' },
+        { performer: 'Novasoul',                  stage: 'Mojave',          day: 'Day 1', startTime: '14:00', endTime: '14:50' },
+        // Sahara
+        { performer: 'Sexyy Red',                 stage: 'Sahara',          day: 'Day 1', startTime: '00:05', endTime: '00:55' },
+        { performer: 'Swae Lee',                  stage: 'Sahara',          day: 'Day 1', startTime: '22:50', endTime: '23:40' },
+        { performer: 'Levity',                    stage: 'Sahara',          day: 'Day 1', startTime: '21:15', endTime: '22:20' },
+        { performer: 'KATSEYE',                   stage: 'Sahara',          day: 'Day 1', startTime: '20:00', endTime: '20:45' },
+        { performer: 'Marlon Hoffstadt',          stage: 'Sahara',          day: 'Day 1', startTime: '18:15', endTime: '19:15' },
+        { performer: 'HUGEL',                     stage: 'Sahara',          day: 'Day 1', startTime: '16:50', endTime: '17:50' },
+        { performer: 'Youna',                     stage: 'Sahara',          day: 'Day 1', startTime: '15:45', endTime: '16:35' },
+        { performer: 'MASSIO',                    stage: 'Sahara',          day: 'Day 1', startTime: '14:30', endTime: '15:35' },
         // Yuma
-        ['Chloé Caillet x Rossi','Yuma',         'Day 1', '23:00', '01:00'],
-        ['Marlon Hoffstadt',  'Yuma',            'Day 1', '21:15', '22:30'],
-        ['Prospa',            'Yuma',            'Day 1', '19:30', '20:30'],
-        ['fakemink',          'Yuma',            'Day 1', '17:45', '18:45'],
-        ['Sahar Z',           'Yuma',            'Day 1', '16:00', '17:00'],
-        ['Hamdi',             'Yuma',            'Day 1', '14:15', '15:15'],
+        { performer: 'Gordo',                     stage: 'Yuma',            day: 'Day 1', startTime: '23:15', endTime: '00:55' },
+        { performer: 'Max Styler',                stage: 'Yuma',            day: 'Day 1', startTime: '21:45', endTime: '23:15' },
+        { performer: 'Max Dean x Luke Dean',      stage: 'Yuma',            day: 'Day 1', startTime: '20:30', endTime: '21:45' },
+        { performer: 'Prospa',                    stage: 'Yuma',            day: 'Day 1', startTime: '19:15', endTime: '20:30' },
+        { performer: 'Kettama',                   stage: 'Yuma',            day: 'Day 1', startTime: '18:00', endTime: '19:15' },
+        { performer: 'Rossi. x Chloé Caillet',   stage: 'Yuma',            day: 'Day 1', startTime: '16:45', endTime: '18:00' },
+        { performer: 'Groove Armada',             stage: 'Yuma',            day: 'Day 1', startTime: '15:45', endTime: '16:45' },
+        { performer: 'Arodes',                    stage: 'Yuma',            day: 'Day 1', startTime: '14:45', endTime: '15:45' },
+        { performer: 'Jessica Brankka',           stage: 'Yuma',            day: 'Day 1', startTime: '13:45', endTime: '14:45' },
+        { performer: 'Sahar Z',                   stage: 'Yuma',            day: 'Day 1', startTime: '13:00', endTime: '13:45' },
         // Quasar
-        ['Max Dean x Luke Dean',  'Quasar',      'Day 1', '21:30', '22:30'],
-        ['Bob Baker Marionettes', 'Quasar',      'Day 1', '19:45', '20:45'],
-        ['Arodes',            'Quasar',          'Day 1', '18:00', '18:45'],
-        ['Youna',             'Quasar',          'Day 1', '16:15', '17:00'],
-        ['Cachirula & Loojan','Quasar',           'Day 1', '14:30', '15:15'],
-        ['Jessica Brankka',   'Quasar',          'Day 1', '13:00', '13:45'],
+        { performer: 'PAWSA',                     stage: 'Quasar',          day: 'Day 1', startTime: '21:00', endTime: '23:00' },
+        { performer: 'Deep Dish',                 stage: 'Quasar',          day: 'Day 1', startTime: '19:00', endTime: '21:00' },
+        { performer: 'Tiga',                      stage: 'Quasar',          day: 'Day 1', startTime: '17:00', endTime: '19:00' },
 
         // ── DAY 2 · SATURDAY ────────────────────────────────
         // Coachella Stage
-        ['Justin Bieber',     'Coachella Stage', 'Day 2', '23:00', '01:00'],
-        ['The Strokes',       'Coachella Stage', 'Day 2', '21:00', '22:15'],
-        ['David Byrne',       'Coachella Stage', 'Day 2', '19:15', '20:15'],
-        ['Interpol',          'Coachella Stage', 'Day 2', '17:30', '18:30'],
-        ['Geese',             'Coachella Stage', 'Day 2', '15:45', '16:30'],
-        ['Ceremony',          'Coachella Stage', 'Day 2', '14:00', '14:45'],
-        ['Noga Erez',         'Coachella Stage', 'Day 2', '12:30', '13:15'],
+        { performer: 'Justin Bieber',             stage: 'Coachella Stage', day: 'Day 2', startTime: '23:25', endTime: '01:00' },
+        { performer: 'The Strokes',               stage: 'Coachella Stage', day: 'Day 2', startTime: '21:00', endTime: '22:10' },
+        { performer: 'GIVEON',                    stage: 'Coachella Stage', day: 'Day 2', startTime: '19:00', endTime: '19:50' },
+        { performer: 'Addison Rae',               stage: 'Coachella Stage', day: 'Day 2', startTime: '17:30', endTime: '18:20' },
+        { performer: 'Jaqck Glam',                stage: 'Coachella Stage', day: 'Day 2', startTime: '16:15', endTime: '17:20' },
         // Outdoor Theatre
-        ['Labrinth',          'Outdoor Theatre', 'Day 2', '22:00', '23:00'],
-        ['GIVEON',            'Outdoor Theatre', 'Day 2', '20:15', '21:15'],
-        ['PinkPantheress',    'Outdoor Theatre', 'Day 2', '18:30', '19:30'],
-        ['Royel Otis',        'Outdoor Theatre', 'Day 2', '17:00', '18:00'],
-        ['Blondshell',        'Outdoor Theatre', 'Day 2', '15:15', '16:00'],
-        ['rusowsky',          'Outdoor Theatre', 'Day 2', '13:30', '14:15'],
-        // Sahara
-        ['Solomun',           'Sahara',          'Day 2', '22:30', '00:00'],
-        ['REZZ',              'Sahara',          'Day 2', '20:45', '22:00'],
-        ['Boys Noize',        'Sahara',          'Day 2', '19:00', '20:15'],
-        ['Adriatique',        'Sahara',          'Day 2', '17:15', '18:15'],
-        ['Mahmut Orhan',      'Sahara',          'Day 2', '15:30', '16:30'],
-        ['Ben Sterling',      'Sahara',          'Day 2', '13:45', '14:45'],
-        // Mojave
-        ['Alex G',            'Mojave',          'Day 2', '21:45', '23:00'],
-        ['Taemin',            'Mojave',          'Day 2', '20:00', '21:00'],
-        ['Lambrini Girls',    'Mojave',          'Day 2', '18:15', '19:15'],
-        ['SOSA',              'Mojave',          'Day 2', '16:45', '17:45'],
-        ['Die Spitz',         'Mojave',          'Day 2', '15:00', '15:45'],
-        ['Ecca Vandal',       'Mojave',          'Day 2', '13:15', '14:00'],
-        // Gobi
-        ['Swae Lee',          'Gobi',            'Day 2', '21:00', '22:00'],
-        ['Davido',            'Gobi',            'Day 2', '19:15', '20:15'],
-        ['Addison Rae',       'Gobi',            'Day 2', '17:30', '18:30'],
-        ['Luísa Sonza',       'Gobi',            'Day 2', '15:45', '16:45'],
-        ['Fujii Kaze',        'Gobi',            'Day 2', '14:00', '15:00'],
-        ['ZULAN',             'Gobi',            'Day 2', '12:30', '13:15'],
+        { performer: 'David Byrne',               stage: 'Outdoor Theatre', day: 'Day 2', startTime: '22:20', endTime: '23:20' },
+        { performer: 'Labrinth',                  stage: 'Outdoor Theatre', day: 'Day 2', startTime: '20:30', endTime: '21:25' },
+        { performer: 'SOMBR',                     stage: 'Outdoor Theatre', day: 'Day 2', startTime: '19:05', endTime: '19:55' },
+        { performer: 'Alex G',                    stage: 'Outdoor Theatre', day: 'Day 2', startTime: '17:10', endTime: '18:00' },
+        { performer: 'Los Hermanos Flores',       stage: 'Outdoor Theatre', day: 'Day 2', startTime: '15:55', endTime: '16:45' },
+        { performer: 'Blondshell',                stage: 'Outdoor Theatre', day: 'Day 2', startTime: '14:40', endTime: '15:25' },
         // Sonora
-        ['SOMBR',             'Sonora',          'Day 2', '22:15', '23:00'],
-        ['¥ØU$UK€ ¥UK1MAT$U', 'Sonora',         'Day 2', '20:30', '21:30'],
-        ['Los Hermanos Flores','Sonora',          'Day 2', '18:45', '19:45'],
-        ['Riordan',           'Sonora',          'Day 2', '17:00', '17:45'],
-        ['WHATMORE',          'Sonora',          'Day 2', '15:15', '16:00'],
-        ['Yamagucci',         'Sonora',          'Day 2', '13:30', '14:15'],
+        { performer: 'Mind Enterprises',          stage: 'Sonora',          day: 'Day 2', startTime: '21:45', endTime: '22:35' },
+        { performer: '54 Ultra',                  stage: 'Sonora',          day: 'Day 2', startTime: '19:50', endTime: '20:30' },
+        { performer: 'rusowsky',                  stage: 'Sonora',          day: 'Day 2', startTime: '18:40', endTime: '19:20' },
+        { performer: 'Ceremony',                  stage: 'Sonora',          day: 'Day 2', startTime: '17:30', endTime: '18:10' },
+        { performer: 'Ecca Vandal',               stage: 'Sonora',          day: 'Day 2', startTime: '16:20', endTime: '17:00' },
+        { performer: 'Freak Slug',                stage: 'Sonora',          day: 'Day 2', startTime: '15:10', endTime: '15:50' },
+        { performer: 'Die Spitz',                 stage: 'Sonora',          day: 'Day 2', startTime: '14:00', endTime: '14:40' },
+        { performer: 'Triste Juventud',           stage: 'Sonora',          day: 'Day 2', startTime: '13:00', endTime: '14:00' },
+        // Gobi
+        { performer: 'Morat',                     stage: 'Gobi',            day: 'Day 2', startTime: '22:10', endTime: '23:00' },
+        { performer: 'BIA',                       stage: 'Gobi',            day: 'Day 2', startTime: '21:00', endTime: '21:45' },
+        { performer: 'Davido',                    stage: 'Gobi',            day: 'Day 2', startTime: '19:50', endTime: '20:35' },
+        { performer: 'Geese',                     stage: 'Gobi',            day: 'Day 2', startTime: '18:15', endTime: '19:00' },
+        { performer: 'Luísa Sonza',               stage: 'Gobi',            day: 'Day 2', startTime: '17:10', endTime: '17:50' },
+        { performer: 'WHATMORE',                  stage: 'Gobi',            day: 'Day 2', startTime: '16:05', endTime: '16:45' },
+        { performer: 'Noga Erez',                 stage: 'Gobi',            day: 'Day 2', startTime: '14:05', endTime: '14:50' },
+        // Mojave
+        { performer: 'Interpol',                  stage: 'Mojave',          day: 'Day 2', startTime: '22:15', endTime: '23:15' },
+        { performer: 'PinkPantheress',            stage: 'Mojave',          day: 'Day 2', startTime: '20:55', endTime: '21:45' },
+        { performer: 'Taemin',                    stage: 'Mojave',          day: 'Day 2', startTime: '19:30', endTime: '20:20' },
+        { performer: 'Royel Otis',                stage: 'Mojave',          day: 'Day 2', startTime: '17:50', endTime: '18:35' },
+        { performer: 'Fujii Kaze',                stage: 'Mojave',          day: 'Day 2', startTime: '16:30', endTime: '17:20' },
+        { performer: 'Jack White',                stage: 'Mojave',          day: 'Day 2', startTime: '15:00', endTime: '15:45' },
+        // Sahara
+        { performer: 'Worship',                   stage: 'Sahara',          day: 'Day 2', startTime: '23:55', endTime: '00:55' },
+        { performer: 'Adriatique',                stage: 'Sahara',          day: 'Day 2', startTime: '22:30', endTime: '23:25' },
+        { performer: 'REZZ',                      stage: 'Sahara',          day: 'Day 2', startTime: '21:10', endTime: '22:05' },
+        { performer: 'Nine Inch Noize',           stage: 'Sahara',          day: 'Day 2', startTime: '20:00', endTime: '20:45' },
+        { performer: '¥ØU$UK€ ¥UK1MAT$U',        stage: 'Sahara',          day: 'Day 2', startTime: '18:15', endTime: '19:10' },
+        { performer: 'Hamdi',                     stage: 'Sahara',          day: 'Day 2', startTime: '17:00', endTime: '17:55' },
+        { performer: 'ZULAN',                     stage: 'Sahara',          day: 'Day 2', startTime: '16:00', endTime: '16:50' },
+        { performer: 'TEED',                      stage: 'Sahara',          day: 'Day 2', startTime: '14:50', endTime: '15:50' },
+        { performer: 'Seek-One',                  stage: 'Sahara',          day: 'Day 2', startTime: '14:00', endTime: '14:45' },
         // Yuma
-        ['Green Velvet × AYYBO','Yuma',          'Day 2', '23:00', '01:00'],
-        ['Bedouin',           'Yuma',            'Day 2', '21:15', '22:30'],
-        ['Freak Slug',        'Yuma',            'Day 2', '19:30', '20:30'],
-        ['Mind Enterprises',  'Yuma',            'Day 2', '17:45', '18:45'],
-        ['GENESI',            'Yuma',            'Day 2', '16:00', '17:00'],
-        ['54 Ultra',          'Yuma',            'Day 2', '14:15', '15:15'],
+        { performer: 'Armin van Buuren x Adam Beyer', stage: 'Yuma',       day: 'Day 2', startTime: '23:00', endTime: '00:55' },
+        { performer: 'Boys Noize',                stage: 'Yuma',            day: 'Day 2', startTime: '21:45', endTime: '23:00' },
+        { performer: 'Bedouin',                   stage: 'Yuma',            day: 'Day 2', startTime: '20:15', endTime: '21:45' },
+        { performer: 'SOSA',                      stage: 'Yuma',            day: 'Day 2', startTime: '18:45', endTime: '20:15' },
+        { performer: 'Ben Sterling',              stage: 'Yuma',            day: 'Day 2', startTime: '17:30', endTime: '18:45' },
+        { performer: 'Mahmut Orhan',              stage: 'Yuma',            day: 'Day 2', startTime: '16:15', endTime: '17:30' },
+        { performer: 'Riordan',                   stage: 'Yuma',            day: 'Day 2', startTime: '15:00', endTime: '16:15' },
+        { performer: 'GENESI',                    stage: 'Yuma',            day: 'Day 2', startTime: '14:00', endTime: '15:00' },
+        { performer: 'Yamagucci',                 stage: 'Yuma',            day: 'Day 2', startTime: '13:00', endTime: '14:00' },
         // Quasar
-        ['Swae Lee',          'Gobi',            'Day 2', '21:00', '22:00'], // already listed
-        ['SOMBR',             'Sonora',          'Day 2', '22:15', '23:00'], // already listed
-        // remaining Saturday acts
-        ['Fujii Kaze',        'Gobi',            'Day 2', '14:00', '15:00'], // dup, will be deduped
+        { performer: 'David Guetta',              stage: 'Quasar',          day: 'Day 2', startTime: '21:00', endTime: '23:00' },
+        { performer: 'Afrojack x Shimza',         stage: 'Quasar',          day: 'Day 2', startTime: '19:00', endTime: '21:00' },
+        { performer: 'Joezi',                     stage: 'Quasar',          day: 'Day 2', startTime: '17:00', endTime: '19:00' },
 
         // ── DAY 3 · SUNDAY ──────────────────────────────────
         // Coachella Stage
-        ['Karol G',           'Coachella Stage', 'Day 3', '22:30', '00:00'],
-        ['Major Lazer',       'Coachella Stage', 'Day 3', '20:30', '21:30'],
-        ['Iggy Pop',          'Coachella Stage', 'Day 3', '18:45', '19:45'],
-        ['Röyksopp',          'Coachella Stage', 'Day 3', '17:00', '18:00'],
-        ['The Rapture',       'Coachella Stage', 'Day 3', '15:15', '16:15'],
-        ['Samia',             'Coachella Stage', 'Day 3', '13:30', '14:15'],
-        ['Los Retros',        'Coachella Stage', 'Day 3', '12:00', '12:45'],
+        { performer: 'KAROL G',                   stage: 'Coachella Stage', day: 'Day 3', startTime: '21:55', endTime: '00:00' },
+        { performer: 'Young Thug',                stage: 'Coachella Stage', day: 'Day 3', startTime: '19:50', endTime: '20:40' },
+        { performer: 'Major Lazer',               stage: 'Coachella Stage', day: 'Day 3', startTime: '18:10', endTime: '19:10' },
+        { performer: 'Wet Leg',                   stage: 'Coachella Stage', day: 'Day 3', startTime: '16:45', endTime: '17:30' },
+        { performer: 'Tijuana Panthers',          stage: 'Coachella Stage', day: 'Day 3', startTime: '15:40', endTime: '16:15' },
+        { performer: 'Gabe Real',                 stage: 'Coachella Stage', day: 'Day 3', startTime: '14:45', endTime: '15:30' },
         // Outdoor Theatre
-        ['FKA twigs',         'Outdoor Theatre', 'Day 3', '21:30', '22:45'],
-        ['Laufey',            'Outdoor Theatre', 'Day 3', '19:45', '20:45'],
-        ['Little Simz',       'Outdoor Theatre', 'Day 3', '18:00', '19:00'],
-        ['Holly Humberstone', 'Outdoor Theatre', 'Day 3', '16:15', '17:15'],
-        ['Gigi Perez',        'Outdoor Theatre', 'Day 3', '14:30', '15:15'],
-        ['Model/Actriz',      'Outdoor Theatre', 'Day 3', '13:00', '13:45'],
-        // Sahara
-        ['Anyma (Æden)',      'Sahara',          'Day 3', '23:00', '01:00'],
-        ['Kaskade',           'Sahara',          'Day 3', '21:15', '22:30'],
-        ['Subtronics',        'Sahara',          'Day 3', '19:30', '20:45'],
-        ['Armin van Buuren x Adam Beyer','Sahara','Day 3', '17:45', '18:45'],
-        ['Mochakk',           'Sahara',          'Day 3', '16:00', '17:00'],
-        ['BUNT',              'Sahara',          'Day 3', '14:15', '15:15'],
-        ['AZZECCA',           'Sahara',          'Day 3', '12:30', '13:15'],
-        // Mojave
-        ['Clipse',            'Mojave',          'Day 3', '21:00', '22:15'],
-        ['Wet Leg',           'Mojave',          'Day 3', '19:15', '20:15'],
-        ['Suicidal Tendencies','Mojave',         'Day 3', '17:30', '18:30'],
-        ['Black Flag',        'Mojave',          'Day 3', '15:45', '16:45'],
-        ['DRAIN',             'Mojave',          'Day 3', '14:00', '14:45'],
-        ['Glitterer',         'Mojave',          'Day 3', '13:00', '13:45'],
-        // Gobi
-        ['Young Thug',        'Gobi',            'Day 3', '21:45', '23:00'],
-        ['BIGBANG',           'Gobi',            'Day 3', '20:00', '21:00'],
-        ['Oklou',             'Gobi',            'Day 3', '18:15', '19:15'],
-        ['COBRAH',            'Gobi',            'Day 3', '16:30', '17:30'],
-        ['&friends',          'Gobi',            'Day 3', '14:45', '15:30'],
-        ['RØZ',               'Gobi',            'Day 3', '13:00', '13:45'],
+        { performer: 'BIGBANG',                   stage: 'Outdoor Theatre', day: 'Day 3', startTime: '22:30', endTime: '23:30' },
+        { performer: 'Laufey',                    stage: 'Outdoor Theatre', day: 'Day 3', startTime: '20:40', endTime: '21:40' },
+        { performer: 'Foster the People',         stage: 'Outdoor Theatre', day: 'Day 3', startTime: '18:45', endTime: '19:40' },
+        { performer: 'CLIPSE',                    stage: 'Outdoor Theatre', day: 'Day 3', startTime: '17:15', endTime: '18:10' },
+        { performer: 'Gigi Perez',                stage: 'Outdoor Theatre', day: 'Day 3', startTime: '16:00', endTime: '16:45' },
+        { performer: 'Juicewon',                  stage: 'Outdoor Theatre', day: 'Day 3', startTime: '15:00', endTime: '15:50' },
         // Sonora
-        ['WhoMadeWho',        'Sonora',          'Day 3', '22:00', '23:00'],
-        ['The Chats',         'Sonora',          'Day 3', '20:15', '21:15'],
-        ['Jane Remover',      'Sonora',          'Day 3', '18:30', '19:30'],
-        ['MESTIZA',           'Sonora',          'Day 3', '16:45', '17:45'],
-        ['LE YORA',           'Sonora',          'Day 3', '15:00', '15:45'],
-        ['Tomora',            'Sonora',          'Day 3', '13:15', '14:00'],
+        { performer: 'French Police',             stage: 'Sonora',          day: 'Day 3', startTime: '21:10', endTime: '22:00' },
+        { performer: 'DRAIN',                     stage: 'Sonora',          day: 'Day 3', startTime: '20:00', endTime: '20:40' },
+        { performer: 'RØZ',                       stage: 'Sonora',          day: 'Day 3', startTime: '18:40', endTime: '19:30' },
+        { performer: 'Jane Remover',              stage: 'Sonora',          day: 'Day 3', startTime: '16:20', endTime: '17:00' },
+        { performer: 'Model/Actriz',              stage: 'Sonora',          day: 'Day 3', startTime: '15:10', endTime: '15:50' },
+        { performer: 'Glitterer',                 stage: 'Sonora',          day: 'Day 3', startTime: '14:00', endTime: '14:40' },
+        { performer: 'Panda & Chok',              stage: 'Sonora',          day: 'Day 3', startTime: '13:00', endTime: '14:00' },
+        // Gobi
+        { performer: 'The Rapture',               stage: 'Gobi',            day: 'Day 3', startTime: '21:05', endTime: '21:55' },
+        { performer: 'TOMORA',                    stage: 'Gobi',            day: 'Day 3', startTime: '19:45', endTime: '20:35' },
+        { performer: 'Black Flag',                stage: 'Gobi',            day: 'Day 3', startTime: '18:30', endTime: '19:05' },
+        { performer: 'Los Retros',                stage: 'Gobi',            day: 'Day 3', startTime: '17:30', endTime: '18:10' },
+        { performer: 'Oklou',                     stage: 'Gobi',            day: 'Day 3', startTime: '17:15', endTime: '18:00' },
+        { performer: 'COBRAH',                    stage: 'Gobi',            day: 'Day 3', startTime: '16:05', endTime: '16:50' },
+        { performer: 'The Chats',                 stage: 'Gobi',            day: 'Day 3', startTime: '15:00', endTime: '15:40' },
+        { performer: 'flowerovlove',              stage: 'Gobi',            day: 'Day 3', startTime: '14:05', endTime: '14:35' },
+        // Mojave
+        { performer: 'FKA twigs',                 stage: 'Mojave',          day: 'Day 3', startTime: '20:45', endTime: '22:00' },
+        { performer: 'Iggy Pop',                  stage: 'Mojave',          day: 'Day 3', startTime: '19:10', endTime: '20:10' },
+        { performer: 'Suicidal Tendencies',       stage: 'Mojave',          day: 'Day 3', startTime: '17:35', endTime: '18:25' },
+        { performer: 'Little Simz',               stage: 'Mojave',          day: 'Day 3', startTime: '16:25', endTime: '17:10' },
+        { performer: 'Samia',                     stage: 'Mojave',          day: 'Day 3', startTime: '15:15', endTime: '15:55' },
+        { performer: 'wyldeflower',               stage: 'Mojave',          day: 'Day 3', startTime: '14:30', endTime: '15:10' },
+        // Sahara
+        { performer: 'Kaskade',                   stage: 'Sahara',          day: 'Day 3', startTime: '22:45', endTime: '23:55' },
+        { performer: 'Subtronics',                stage: 'Sahara',          day: 'Day 3', startTime: '21:05', endTime: '22:05' },
+        { performer: 'Mochakk',                   stage: 'Sahara',          day: 'Day 3', startTime: '19:25', endTime: '20:25' },
+        { performer: 'Duke Dumont',               stage: 'Sahara',          day: 'Day 3', startTime: '18:10', endTime: '19:10' },
+        { performer: 'BUNT.',                     stage: 'Sahara',          day: 'Day 3', startTime: '16:45', endTime: '17:45' },
+        { performer: 'Girl Math (VNSSA x NALA)',  stage: 'Sahara',          day: 'Day 3', startTime: '15:35', endTime: '16:35' },
+        { performer: 'LOBOMAN',                   stage: 'Sahara',          day: 'Day 3', startTime: '14:30', endTime: '15:30' },
         // Yuma
-        ['Carlita x Josh Baker','Yuma',          'Day 3', '23:00', '01:00'],
-        ['Duke Dumont',       'Yuma',            'Day 3', '21:15', '22:30'],
-        ['Worship',           'Yuma',            'Day 3', '19:30', '20:30'],
-        ['French Police',     'Yuma',            'Day 3', '17:45', '18:45'],
-        ['AZZECCA',           'Yuma',            'Day 3', '16:00', '17:00'], // dup
+        { performer: 'Green Velvet x AYYBO',      stage: 'Yuma',            day: 'Day 3', startTime: '22:00', endTime: '23:55' },
+        { performer: 'WhoMadeWho',                stage: 'Yuma',            day: 'Day 3', startTime: '20:30', endTime: '22:00' },
+        { performer: 'Röyksopp',                  stage: 'Yuma',            day: 'Day 3', startTime: '19:00', endTime: '20:30' },
+        { performer: 'Carlita x Josh Baker',      stage: 'Yuma',            day: 'Day 3', startTime: '17:30', endTime: '19:00' },
+        { performer: 'MESTIZA',                   stage: 'Yuma',            day: 'Day 3', startTime: '16:15', endTime: '17:30' },
+        { performer: '&friends',                  stage: 'Yuma',            day: 'Day 3', startTime: '15:00', endTime: '16:15' },
+        { performer: 'AZZECCA',                   stage: 'Yuma',            day: 'Day 3', startTime: '14:00', endTime: '15:00' },
+        { performer: 'LE YORA',                   stage: 'Yuma',            day: 'Day 3', startTime: '13:00', endTime: '14:00' },
         // Quasar
-        ['Armin van Buuren x Adam Beyer','Quasar','Day 3','17:45','18:45'], // dup
-    ];
+        { performer: 'Fatboy Slim',               stage: 'Quasar',          day: 'Day 3', startTime: '20:00', endTime: '22:00' },
+        { performer: 'JOY (Anonymous)',           stage: 'Quasar',          day: 'Day 3', startTime: '18:00', endTime: '20:00' },
+        { performer: 'Jazzy',                     stage: 'Quasar',          day: 'Day 3', startTime: '16:00', endTime: '18:00' },
+    ].map((s, i) => ({ ...s, id: i + 1 }));
 
-    // Deduplicate by performer+day
-    const seen = new Set();
-    const deduped = rows.filter(r => {
-        const key = r[0] + '|' + r[2];
-        if (seen.has(key)) return false;
-        seen.add(key); return true;
-    });
-
-    S.schedule = deduped.map(([performer, stage, day, startTime, endTime], i) =>
-        ({ id: i + 1, performer, stage, day, startTime, endTime }));
     S.nextId = S.schedule.length + 1;
     // Schedule is static — not stored in Firebase
 }

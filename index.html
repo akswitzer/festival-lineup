@@ -577,7 +577,7 @@ function showSetupScreen() {
 
 function refreshCurrentView() {
     if (currentView === 'lineup')   renderLineupView();
-    if (currentView === 'add')      renderAddHome();
+    if (currentView === 'add')      activePerson ? renderPerfList() : renderAddHome();
     if (currentView === 'grid')     renderGrid();
     if (currentView === 'analysis') renderAnalysis();
 }

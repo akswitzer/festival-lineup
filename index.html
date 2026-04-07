@@ -516,6 +516,13 @@ const IS_CONFIGURED = !FIREBASE_CONFIG.apiKey.startsWith('PASTE_');
 let db  = null;
 let currentView = 'lineup';
 
+// Treat 00:xx–05:xx as next-day (hour 24–29) so midnight sorts after 11 PM
+function festMins(t) {
+    const [h, m] = t.split(':').map(Number);
+    return (h < 6 ? h + 24 : h) * 60 + m;
+}
+function festSort(a, b) { return festMins(a.startTime) - festMins(b.startTime); }
+
 function sanitizeKey(name) {
     // Firebase keys cannot contain . # $ [ ] /
     return name.replace(/[.#$[\]/]/g, '_');
@@ -862,7 +869,7 @@ function renderLineupList() {
     const el = document.getElementById('lineup-list');
     let items = S.schedule
         .filter(s => s.day === lineupDay)
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+        .sort(festSort);
 
     if (activeStageFilter) items = items.filter(s => s.stage === activeStageFilter);
 
@@ -992,7 +999,7 @@ function renderPerfList() {
 
     const items = S.schedule
         .filter(s => s.day === addDay)
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+        .sort(festSort);
 
     if (!items.length) { el.innerHTML = '<div class="empty"><p>No acts for this day.</p></div>'; updateSelCount(); return; }
 
@@ -1174,7 +1181,7 @@ function renderAnalysis() {
     S.people.forEach(p => p.selections.forEach(id => { if (id in counts) counts[id]++; }));
 
     const ranked = S.schedule.filter(s => counts[s.id] > 0)
-        .sort((a,b) => counts[b.id] - counts[a.id] || a.startTime.localeCompare(b.startTime));
+        .sort((a,b) => counts[b.id] - counts[a.id] || festSort(a, b));
 
     if (!ranked.length) {
         el.innerHTML = '<div class="empty"><div class="ei">🤔</div><p>Nobody has selected any acts yet!</p></div>';

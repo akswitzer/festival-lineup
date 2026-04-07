@@ -243,7 +243,7 @@
             border-top: 1px solid var(--border); pointer-events: none;
         }
         .tl-bar {
-            position: absolute; left: 3px; right: 3px;
+            position: absolute;
             border-radius: 6px; padding: 4px 6px;
             border-left: 3px solid; overflow: hidden;
             font-size: 10px; font-weight: 600; line-height: 1.3;
@@ -1103,10 +1103,31 @@ function renderGrid() {
     }
     html += '</div></div>';
 
+    // Assign side-by-side lanes to overlapping acts within one person's column
+    function assignLanes(acts) {
+        if (!acts.length) return [];
+        const sorted = [...acts].sort((a, b) => toMins(a.startTime) - toMins(b.startTime));
+        const laneEnds = []; // laneEnds[i] = end-time (mins) of last act in lane i
+        const assigned = new Map();
+        sorted.forEach(act => {
+            const start = toMins(act.startTime);
+            const end   = toMins(act.endTime);
+            let lane = laneEnds.findIndex(t => t <= start);
+            if (lane === -1) { lane = laneEnds.length; laneEnds.push(0); }
+            laneEnds[lane] = end;
+            assigned.set(act.id, lane);
+        });
+        const numLanes = laneEnds.length;
+        return acts.map(act => ({ act, lane: assigned.get(act.id), numLanes }));
+    }
+
     // Person columns
     html += '<div class="tl-cols">';
     S.people.forEach(person => {
-        const sels = Array.isArray(person.selections) ? person.selections : Object.values(person.selections || {});
+        const sels     = Array.isArray(person.selections) ? person.selections : Object.values(person.selections || {});
+        const picked   = dayItems.filter(item => sels.includes(item.id));
+        const laned    = assignLanes(picked);
+
         html += `<div class="tl-col" style="height:${TOTAL_H}px">`;
 
         // Hour grid lines
@@ -1114,15 +1135,18 @@ function renderGrid() {
             html += `<div class="tl-hline" style="top:${(m - DAY_START) * PX_PER_MIN}px"></div>`;
         }
 
-        // Act bars
-        dayItems.filter(item => sels.includes(item.id)).forEach(item => {
-            const c   = sc(item.stage);
-            const top = yPos(item.startTime);
-            const ht  = barH(item.startTime, item.endTime);
-            html += `<div class="tl-bar" style="top:${top}px;height:${ht}px;background:${c.bg};border-color:${c.bd}">
-                <div class="tl-bar-name"  style="color:${c.fg}">${h(item.performer)}</div>
-                <div class="tl-bar-stage" style="color:${c.fg}">${h(item.stage)}</div>
-                <div class="tl-bar-time"  style="color:${c.fg}">${fmt(item.startTime)}–${fmt(item.endTime)}</div>
+        // Act bars — split overlapping acts into side-by-side sub-lanes
+        laned.forEach(({ act, lane, numLanes }) => {
+            const c      = sc(act.stage);
+            const top    = yPos(act.startTime);
+            const ht     = barH(act.startTime, act.endTime);
+            const pct    = 100 / numLanes;
+            const barL   = `calc(${lane * pct}% + 2px)`;
+            const barW   = `calc(${pct}% - 4px)`;
+            html += `<div class="tl-bar" style="top:${top}px;height:${ht}px;left:${barL};width:${barW};background:${c.bg};border-color:${c.bd}">
+                <div class="tl-bar-name"  style="color:${c.fg}">${h(act.performer)}</div>
+                <div class="tl-bar-stage" style="color:${c.fg}">${h(act.stage)}</div>
+                <div class="tl-bar-time"  style="color:${c.fg}">${fmt(act.startTime)}–${fmt(act.endTime)}</div>
             </div>`;
         });
 

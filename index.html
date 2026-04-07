@@ -226,8 +226,8 @@
             position: sticky; left: 0; z-index: 5;
             background: var(--surface2);
             border-right: 1px solid var(--border);
-            position: relative;
         }
+        .tl-ruler-inner { position: relative; }
         .tl-hour-lbl {
             position: absolute; left: 0; right: 0;
             padding: 0 4px;
@@ -1095,13 +1095,13 @@ function renderGrid() {
     // ── Body ──
     html += '<div class="tl-body">';
 
-    // Time ruler
-    html += `<div class="tl-ruler" style="height:${TOTAL_H}px">`;
+    // Time ruler (sticky-left wrapper + inner relative div for label positioning)
+    html += `<div class="tl-ruler"><div class="tl-ruler-inner" style="height:${TOTAL_H}px">`;
     for (let m = DAY_START; m <= DAY_END; m += 60) {
         const top = (m - DAY_START) * PX_PER_MIN;
         html += `<div class="tl-hour-lbl" style="top:${top}px">${fmtHour(m)}</div>`;
     }
-    html += '</div>';
+    html += '</div></div>';
 
     // Person columns
     html += '<div class="tl-cols">';

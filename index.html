@@ -204,35 +204,55 @@
 
         /* ── Grid ── */
         .grid-wrap { overflow-x: auto; }
-        table.lineup-grid {
-            border-collapse: collapse; width: max-content; min-width: 100%;
-            font-size: 12px;
+        /* ── Timeline Grid ── */
+        .tl-header {
+            display: flex; background: var(--surface);
+            border: 1px solid var(--border); border-radius: 10px 10px 0 0;
+            position: sticky; top: 0; z-index: 15;
         }
-        .lineup-grid th {
-            background: var(--surface); padding: 9px 10px;
-            font-size: 11px; font-weight: 700; white-space: nowrap;
-            border: 1px solid var(--border);
-            position: sticky; top: 0; z-index: 5; text-align: center;
+        .tl-htime {
+            min-width: 42px; flex-shrink: 0;
+            border-right: 1px solid var(--border);
         }
-        .lineup-grid th:first-child {
-            position: sticky; left: 0; z-index: 10; text-align: left; min-width: 75px;
+        .tl-hperson {
+            min-width: 110px; flex: 1; padding: 8px 6px;
+            font-size: 11px; font-weight: 700; text-align: center;
+            border-right: 1px solid var(--border);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .lineup-grid td {
-            border: 1px solid var(--border); padding: 6px 7px;
-            vertical-align: top; min-width: 90px; background: var(--bg);
+        .tl-body { display: flex; border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; overflow: hidden; }
+        .tl-ruler {
+            min-width: 42px; flex-shrink: 0;
+            position: sticky; left: 0; z-index: 5;
+            background: var(--surface2);
+            border-right: 1px solid var(--border);
+            position: relative;
         }
-        .lineup-grid td:first-child {
-            position: sticky; left: 0; z-index: 1; background: var(--surface2);
-            font-size: 11px; font-weight: 700; color: var(--muted);
-            white-space: nowrap; text-align: left; min-width: 75px;
+        .tl-hour-lbl {
+            position: absolute; left: 0; right: 0;
+            padding: 0 4px;
+            font-size: 9px; font-weight: 700; color: var(--muted);
+            transform: translateY(-50%); line-height: 1;
+            text-align: right;
         }
-        .gcell {
-            border-radius: 6px; padding: 5px 7px; font-weight: 600;
-            line-height: 1.3; border-left: 3px solid;
+        .tl-cols { display: flex; flex: 1; }
+        .tl-col  { min-width: 110px; flex: 1; position: relative; border-right: 1px solid var(--border); }
+        .tl-col:last-child { border-right: none; }
+        .tl-hline {
+            position: absolute; left: 0; right: 0;
+            border-top: 1px solid var(--border); pointer-events: none;
         }
-        .gcell + .gcell { margin-top: 3px; }
-        .gcell-stage { font-size: 10px; color: var(--muted); margin-top: 2px; font-weight: 500; }
-        .gcell-time  { font-size: 9px; color: var(--muted); }
+        .tl-bar {
+            position: absolute; left: 3px; right: 3px;
+            border-radius: 6px; padding: 4px 6px;
+            border-left: 3px solid; overflow: hidden;
+            font-size: 10px; font-weight: 600; line-height: 1.3;
+            box-sizing: border-box;
+        }
+        .tl-bar-name  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tl-bar-stage { font-size: 9px; opacity: 0.8; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tl-bar-time  { font-size: 9px; opacity: 0.65; }
+        .gcell-empty { color: var(--border); text-align: center; font-size: 18px; padding: 4px 0; }
         .gcell-empty { color: var(--border); text-align: center; font-size: 18px; padding: 4px 0; }
 
         /* ── Analysis ── */
@@ -1047,39 +1067,70 @@ function renderGrid() {
         el.innerHTML = '<div class="empty"><div class="ei">👥</div><p>No lineups yet.<br>Go to "My Picks" to add yours!</p></div>';
         return;
     }
-    const dayItems = S.schedule.filter(s => s.day === gDay).sort((a,b) => a.startTime.localeCompare(b.startTime));
+    const dayItems = S.schedule.filter(s => s.day === gDay);
     if (!dayItems.length) { el.innerHTML = '<div class="empty"><p>No acts on this day.</p></div>'; return; }
 
-    const slots = [...new Set(dayItems.map(s => s.startTime))].sort();
+    const PX_PER_MIN = 1.5;
+    const DAY_START  = 13 * 60;  // 1 PM in minutes
+    const DAY_END    = 25 * 60;  // 1 AM (next day) in minutes
+    const TOTAL_H    = (DAY_END - DAY_START) * PX_PER_MIN;
 
-    let html = '<table class="lineup-grid"><thead><tr><th>Time</th>';
-    S.people.forEach(p => { html += `<th>${h(p.name)}</th>`; });
-    html += '</tr></thead><tbody>';
+    function toMins(t) {
+        const [hr, mn] = t.split(':').map(Number);
+        return (hr < 6 ? hr + 24 : hr) * 60 + mn;
+    }
+    function yPos(t)      { return (toMins(t) - DAY_START) * PX_PER_MIN; }
+    function barH(s, e)   { return Math.max((toMins(e) - toMins(s)) * PX_PER_MIN, 18); }
+    function fmtHour(m) {
+        const hr = (m / 60) % 24;
+        return hr === 0 ? '12A' : hr < 12 ? `${hr}A` : hr === 12 ? '12P' : `${hr - 12}P`;
+    }
 
-    slots.forEach(slot => {
-        const slotItems = dayItems.filter(s => s.startTime === slot);
-        html += '<tr>';
-        html += `<td><strong>${fmt(slot)}</strong></td>`;
-        S.people.forEach(person => {
-            const chosen = slotItems.filter(item => person.selections.includes(item.id));
-            if (!chosen.length) {
-                html += '<td><div class="gcell-empty">·</div></td>';
-            } else {
-                html += '<td>';
-                chosen.forEach(item => {
-                    const c = sc(item.stage);
-                    html += `<div class="gcell" style="background:${c.bg};border-color:${c.bd}">
-                        <div style="color:${c.fg}">${h(item.performer)}</div>
-                        <div class="gcell-stage">${h(item.stage)}</div>
-                        <div class="gcell-time">${fmt(item.startTime)}–${fmt(item.endTime)}</div>
-                    </div>`;
-                });
-                html += '</td>';
-            }
+    // ── Header row (person names) ──
+    let html = '<div class="tl-header">';
+    html += '<div class="tl-htime"></div>';
+    S.people.forEach(p => { html += `<div class="tl-hperson">${h(p.name)}</div>`; });
+    html += '</div>';
+
+    // ── Body ──
+    html += '<div class="tl-body">';
+
+    // Time ruler
+    html += `<div class="tl-ruler" style="height:${TOTAL_H}px">`;
+    for (let m = DAY_START; m <= DAY_END; m += 60) {
+        const top = (m - DAY_START) * PX_PER_MIN;
+        html += `<div class="tl-hour-lbl" style="top:${top}px">${fmtHour(m)}</div>`;
+    }
+    html += '</div>';
+
+    // Person columns
+    html += '<div class="tl-cols">';
+    S.people.forEach(person => {
+        const sels = Array.isArray(person.selections) ? person.selections : Object.values(person.selections || {});
+        html += `<div class="tl-col" style="height:${TOTAL_H}px">`;
+
+        // Hour grid lines
+        for (let m = DAY_START; m <= DAY_END; m += 60) {
+            html += `<div class="tl-hline" style="top:${(m - DAY_START) * PX_PER_MIN}px"></div>`;
+        }
+
+        // Act bars
+        dayItems.filter(item => sels.includes(item.id)).forEach(item => {
+            const c   = sc(item.stage);
+            const top = yPos(item.startTime);
+            const ht  = barH(item.startTime, item.endTime);
+            html += `<div class="tl-bar" style="top:${top}px;height:${ht}px;background:${c.bg};border-color:${c.bd}">
+                <div class="tl-bar-name"  style="color:${c.fg}">${h(item.performer)}</div>
+                <div class="tl-bar-stage" style="color:${c.fg}">${h(item.stage)}</div>
+                <div class="tl-bar-time"  style="color:${c.fg}">${fmt(item.startTime)}–${fmt(item.endTime)}</div>
+            </div>`;
         });
-        html += '</tr>';
+
+        html += '</div>';
     });
-    html += '</tbody></table>';
+
+    html += '</div>'; // tl-cols
+    html += '</div>'; // tl-body
     el.innerHTML = html;
 }
 
